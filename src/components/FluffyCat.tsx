@@ -1,7 +1,7 @@
 import { GROUND_Y, CAT_BODY_ROWS, CAT_LEG_FRAMES, CAT_PALETTE, CAT_SPEED } from "../game/constants";
 import type { Bounds } from "../game/types";
 
-const PIXEL = 3;
+const PIXEL = 2;
 const COLS = CAT_BODY_ROWS[0].length;
 const ROWS = CAT_BODY_ROWS.length + CAT_LEG_FRAMES[0].length;
 const WIDTH = COLS * PIXEL;
