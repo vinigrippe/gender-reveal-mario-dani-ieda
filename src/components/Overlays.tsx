@@ -44,13 +44,19 @@ export function Overlays({
 				/>
 			)}
 
-			{spot > 20 && (
-				<div
-					className="surprise"
-					style={{ width: WORLD_WIDTH, opacity: alpha }}
-				>
-					✨ Surpresa! ✨
+			{state.prank === "done" ? (
+				<div className="surprise" style={{ width: WORLD_WIDTH }}>
+					Parabéns Ieda & Dani
 				</div>
+			) : (
+				spot > 20 && (
+					<div
+						className="surprise"
+						style={{ width: WORLD_WIDTH, opacity: alpha }}
+					>
+						✨ Surpresa! ✨
+					</div>
+				)
 			)}
 
 			{state.flash > 0 && (

@@ -144,7 +144,7 @@ function openBox(state: GameState, box: GiftBoxState) {
 	);
 	if (box.special && othersClosed) {
 		box.shake = 24;
-		state.toast = "Malandrinho! Abra todas as outras caixas primeiro!";
+		state.toast = "Malandrinhos! Abra todas as outras caixas primeiro!";
 		state.toastTicks = 120;
 		return;
 	}
