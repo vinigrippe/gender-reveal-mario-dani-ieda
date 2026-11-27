@@ -1,4 +1,4 @@
-# MENINA Gift Box Game
+# MENINE Mario Bros Gender Reveal Game
 
 React + TypeScript + Vite. Everything is rendered with React components (DOM + SVG + CSS), no canvas.
 
