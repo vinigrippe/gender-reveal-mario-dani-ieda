@@ -322,3 +322,48 @@ body {
 .message-box__hidden {
 	visibility: hidden;
 }
+
+/* ---------- touch controls ---------- */
+.touch-controls {
+	display: none;
+}
+@media (hover: none) and (pointer: coarse) {
+	.touch-controls {
+		display: block;
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		user-select: none;
+		-webkit-user-select: none;
+		-webkit-touch-callout: none;
+	}
+}
+.touch-btn {
+	position: absolute;
+	bottom: calc(16px + env(safe-area-inset-bottom));
+	width: 72px;
+	height: 72px;
+	padding: 0;
+	border: 3px solid #fff;
+	border-radius: 50%;
+	background: rgba(0, 0, 0, 0.35);
+	color: #fff;
+	font: 24px "Press Start 2P", monospace;
+	pointer-events: auto;
+	touch-action: none;
+	-webkit-tap-highlight-color: transparent;
+}
+.touch-btn:active {
+	background: rgba(255, 255, 255, 0.35);
+}
+.touch-btn--left {
+	left: calc(16px + env(safe-area-inset-left));
+}
+.touch-btn--right {
+	left: calc(104px + env(safe-area-inset-left));
+}
+.touch-btn--jump {
+	right: calc(16px + env(safe-area-inset-right));
+	width: 88px;
+	height: 88px;
+}

@@ -13,6 +13,7 @@ import { Mario } from "./Mario";
 import { Overlays } from "./Overlays";
 import { Particles } from "./Particles";
 import { FluffyCat } from "./FluffyCat";
+import { TouchControls } from "./TouchControls";
 
 export function Game() {
   const viewport = useViewport();
@@ -50,6 +51,7 @@ export function Game() {
           <Overlays state={state} bounds={viewport.bounds} />
         </div>
       </div>
+      <TouchControls input={input} />
     </div>
   );
 }
