@@ -29,9 +29,6 @@ export function Overlays({
 	const spotX = specialBox.x + BOX_SIZE / 2 - cover.left;
 	const spotY = 90 - cover.top;
 
-	const typed = Math.floor((state.tick - state.prankTick) / 2);
-	let lineStart = 0;
-
 	return (
 		<>
 			{spot > 0 && (
@@ -66,10 +63,33 @@ export function Overlays({
 				/>
 			)}
 
-			{state.toastTicks > 0 && <div className="message-box">{state.toast}</div>}
+			<Messages state={state} />
 
-			{state.prank === "message" && (
-				<div className="message-box">
+			{state.fade > 0 && (
+				<div className="overlay" style={{ ...cover, background: `rgba(0,0,0,${state.fade})` }} />
+			)}
+		</>
+	);
+}
+
+/** On touch devices the `screen` copy is shown at the top of the page instead of inside the scaled world. */
+export function Messages({
+	state,
+	screen = false,
+}: {
+	state: GameState;
+	screen?: boolean;
+}) {
+	const className = screen ? "message-box message-box--screen" : "message-box message-box--world";
+	const typed = Math.floor((state.tick - state.prankTick) / 2);
+	let lineStart = 0;
+
+	return (
+		<>
+			{state.toastTicks > 0 && <div className={className}>{state.toast}</div>}
+
+			{state.prank === "message" && state.phase === "overworld" && (
+				<div className={className}>
 					{PRANK_MESSAGE.map((line) => {
 						const shown = Math.max(0, Math.min(line.length, typed - lineStart));
 						lineStart += line.length;

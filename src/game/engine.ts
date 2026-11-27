@@ -4,16 +4,24 @@ import {
 	BOX_START_X,
 	BOX_Y,
 	FAKE_LETTER,
+	FADE_TICKS,
 	FAKE_REVEAL_TICKS,
 	GROUND_Y,
 	LETTER_COLORS,
 	PHYSICS,
+	PIPE_ENTER_TICKS,
+	PIPE_HEIGHT,
+	PIPE_RISE_TICKS,
+	PIPE_WIDTH,
+	PIPE_X,
 	PLAYER_HEIGHT,
 	PLAYER_WIDTH,
+	REVEAL_BURST_COLORS,
 	SPECIAL_BURST_COLORS,
 	SPECIAL_INDEX,
 	WORD,
 } from "./constants";
+import { playSound, stopMusic } from "./sound";
 import type { Bounds, GameState, GiftBoxState, Input } from "./types";
 
 export function createInitialState(): GameState {
@@ -51,6 +59,20 @@ export function createInitialState(): GameState {
 		toastTicks: 0,
 		prank: "none",
 		prankTick: 0,
+		phase: "overworld",
+		pipe: 0,
+		transitionTick: null,
+		fade: 0,
+		caveBox: {
+			id: WORD.length,
+			x: BOX_START_X + SPECIAL_INDEX * BOX_SPACING,
+			y: BOX_Y,
+			letter: WORD[SPECIAL_INDEX],
+			special: true,
+			opened: false,
+			bump: 0,
+			shake: 0,
+		},
 	};
 }
 
@@ -59,6 +81,7 @@ function cloneState(state: GameState): GameState {
 		...state,
 		player: { ...state.player },
 		boxes: state.boxes.map((box) => ({ ...box })),
+		caveBox: { ...state.caveBox },
 		letters: state.letters.map((letter) => ({ ...letter })),
 		particles: state.particles.map((particle) => ({ ...particle })),
 	};
@@ -91,28 +114,58 @@ function spawnBurst(
 	}
 }
 
-function celebrate(state: GameState, box: GiftBoxState) {
+function celebrate(
+	state: GameState,
+	box: GiftBoxState,
+	colors = SPECIAL_BURST_COLORS,
+) {
 	state.flash = 1;
 	state.spotlight = 200;
 	state.shake = 28;
-	spawnBurst(state, box.x + BOX_SIZE / 2, 120, 90, SPECIAL_BURST_COLORS, 7);
+	spawnBurst(state, box.x + BOX_SIZE / 2, 120, 90, colors, 7);
 }
 
-function showRealBox(state: GameState) {
-	const box = state.boxes[SPECIAL_INDEX];
-	box.opened = false;
-	box.bump = 10;
+export function activeBoxes(state: GameState): GiftBoxState[] {
+	if (state.phase === "cave") return [state.caveBox];
+	return state.prank === "none" || state.prank === "fake" ? state.boxes : [];
+}
+
+function raisePipe(state: GameState) {
 	state.prank = "message";
 	state.prankTick = state.tick;
 	state.shake = 12;
-	spawnBurst(
-		state,
-		box.x + BOX_SIZE / 2,
-		box.y + BOX_SIZE / 2,
-		30,
-		SPECIAL_BURST_COLORS,
-		4,
-	);
+	for (const box of state.boxes) {
+		spawnBurst(state, box.x + BOX_SIZE / 2, box.y + BOX_SIZE / 2, 12, ["#ffffff", "#ffd24a", "#c49a6c"], 3);
+	}
+}
+
+function enterCave(state: GameState) {
+	state.phase = "cave";
+	state.particles = [];
+	state.player = {
+		x: 40,
+		y: GROUND_Y - PLAYER_HEIGHT,
+		vx: 0,
+		vy: 0,
+		onGround: true,
+		face: 1,
+	};
+}
+
+function stepTransition(state: GameState) {
+	if (state.transitionTick === null) return;
+	const t = state.tick - state.transitionTick;
+	const fadeStart = PIPE_ENTER_TICKS;
+	const fadePeak = fadeStart + FADE_TICKS;
+
+	if (t < fadeStart) state.player.y += PIPE_HEIGHT / PIPE_ENTER_TICKS;
+	else if (t < fadePeak) state.fade = (t - fadeStart) / FADE_TICKS;
+	else if (t === fadePeak) enterCave(state);
+	else if (t < fadePeak + FADE_TICKS) state.fade = 1 - (t - fadePeak) / FADE_TICKS;
+	else {
+		state.fade = 0;
+		state.transitionTick = null;
+	}
 }
 
 function revealRealLetter(state: GameState, realBox: GiftBoxState) {
@@ -125,23 +178,29 @@ function revealRealLetter(state: GameState, realBox: GiftBoxState) {
 	}
 	state.prank = "done";
 	state.prankTick = state.tick;
-	celebrate(state, realBox);
+	celebrate(state, realBox, REVEAL_BURST_COLORS);
+	stopMusic();
+	playSound("victory");
 }
 
 function openBox(state: GameState, box: GiftBoxState) {
+	const othersClosed = state.boxes.some(
+		(other) => !other.special && !other.opened,
+	);
+	const fakeReveal =
+		state.phase === "overworld" && box.special && !box.opened && !othersClosed;
+	playSound(fakeReveal ? "death" : "coin");
+
 	if (box.opened) {
 		box.bump = 6;
 		return;
 	}
 
-	if (box.special && state.prank === "message") {
+	if (state.phase === "cave") {
 		revealRealLetter(state, box);
 		return;
 	}
 
-	const othersClosed = state.boxes.some(
-		(other) => !other.special && !other.opened,
-	);
 	if (box.special && othersClosed) {
 		box.shake = 24;
 		state.toast = "Malandrinhos! Abra todas as outras caixas primeiro!";
@@ -176,8 +235,34 @@ function openBox(state: GameState, box: GiftBoxState) {
 	}
 }
 
+function collidePipe(state: GameState, input: Input, previousY: number) {
+	if (state.phase !== "overworld" || state.pipe === 0) return;
+	const p = state.player;
+	const top = GROUND_Y - PIPE_HEIGHT * state.pipe;
+	const overlapsX = p.x + PLAYER_WIDTH > PIPE_X && p.x < PIPE_X + PIPE_WIDTH;
+	if (!overlapsX || p.y + PLAYER_HEIGHT <= top) return;
+
+	const cameFromAbove = previousY + PLAYER_HEIGHT <= top + 1;
+	if (cameFromAbove || state.pipe < 1) {
+		p.y = top - PLAYER_HEIGHT;
+		p.vy = 0;
+		p.onGround = true;
+		if (input.down && state.pipe === 1 && state.transitionTick === null) {
+			state.transitionTick = state.tick;
+			p.x = PIPE_X + (PIPE_WIDTH - PLAYER_WIDTH) / 2;
+			p.vx = 0;
+		}
+		return;
+	}
+
+	const fromLeft = p.x + PLAYER_WIDTH / 2 < PIPE_X + PIPE_WIDTH / 2;
+	p.x = fromLeft ? PIPE_X - PLAYER_WIDTH : PIPE_X + PIPE_WIDTH;
+	p.vx = 0;
+}
+
 function movePlayer(state: GameState, input: Input, bounds: Bounds) {
 	const p = state.player;
+	if (state.transitionTick !== null && state.phase === "overworld") return;
 
 	if (input.left) {
 		p.vx -= PHYSICS.acceleration;
@@ -193,14 +278,16 @@ function movePlayer(state: GameState, input: Input, bounds: Bounds) {
 	if (input.jump && p.onGround) {
 		p.vy = PHYSICS.jumpSpeed;
 		p.onGround = false;
+		playSound("jump");
 	}
 
 	const previousY = p.y;
 	p.vy += PHYSICS.gravity;
 	p.y += p.vy;
+	p.onGround = false;
 
 	if (p.vy < 0) {
-		for (const box of state.boxes) {
+		for (const box of activeBoxes(state)) {
 			const overlapsX =
 				p.x + PLAYER_WIDTH > box.x + 4 && p.x < box.x + BOX_SIZE - 4;
 			const boxBottom = box.y + BOX_SIZE;
@@ -217,6 +304,8 @@ function movePlayer(state: GameState, input: Input, bounds: Bounds) {
 		p.vy = 0;
 		p.onGround = true;
 	}
+
+	collidePipe(state, input, previousY);
 }
 
 export function stepGame(
@@ -228,8 +317,9 @@ export function stepGame(
 	state.tick++;
 
 	movePlayer(state, input, bounds);
+	stepTransition(state);
 
-	for (const box of state.boxes) {
+	for (const box of [...state.boxes, state.caveBox]) {
 		if (box.bump > 0) box.bump--;
 		if (box.shake > 0) box.shake--;
 	}
@@ -249,7 +339,9 @@ export function stepGame(
 		state.prank === "fake" &&
 		state.tick - state.prankTick >= FAKE_REVEAL_TICKS
 	)
-		showRealBox(state);
+		raisePipe(state);
+	if (state.prank === "message" && state.pipe < 1)
+		state.pipe = Math.min(1, state.pipe + 1 / PIPE_RISE_TICKS);
 	if (state.shake > 0) state.shake--;
 
 	state.shakeX =

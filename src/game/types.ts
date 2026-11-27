@@ -2,6 +2,7 @@ export interface Input {
   left: boolean;
   right: boolean;
   jump: boolean;
+  down: boolean;
 }
 
 export interface Bounds {
@@ -67,4 +68,12 @@ export interface GameState {
   toastTicks: number;
   prank: "none" | "fake" | "message" | "done";
   prankTick: number;
+  phase: "overworld" | "cave";
+  /** Pipe rise progress, 0 (hidden) to 1 (fully out). */
+  pipe: number;
+  /** Tick when Mario started entering the pipe, null when no transition is running. */
+  transitionTick: number | null;
+  /** Black fade overlay opacity during the phase transition. */
+  fade: number;
+  caveBox: GiftBoxState;
 }

@@ -9,10 +9,12 @@ const KEY_MAP: Record<string, keyof Input> = {
   ArrowUp: "jump",
   w: "jump",
   " ": "jump",
+  ArrowDown: "down",
+  s: "down",
 };
 
 export function useKeyboardInput(): MutableRefObject<Input> {
-  const input = useRef<Input>({ left: false, right: false, jump: false });
+  const input = useRef<Input>({ left: false, right: false, jump: false, down: false });
 
   useEffect(() => {
     const handle = (pressed: boolean) => (event: KeyboardEvent) => {

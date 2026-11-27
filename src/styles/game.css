@@ -21,6 +21,7 @@ body {
 	inset: 0;
 	overflow: hidden;
 	background: #2a66d6;
+	transition: background-color 1.5s;
 }
 .camera {
 	position: absolute;
@@ -30,8 +31,21 @@ body {
 	position: absolute;
 	transform-origin: 0 0;
 }
-.world > * {
+.world > *,
+.scenery > * {
 	position: absolute;
+}
+.scenery {
+	left: 0;
+	top: 0;
+}
+@keyframes fade-in {
+	from {
+		opacity: 0;
+	}
+}
+.scenery--fade-in {
+	animation: fade-in 1.5s ease-in;
 }
 
 /* ---------- scenery ---------- */
@@ -83,6 +97,104 @@ body {
 	overflow: visible;
 }
 
+/* ---------- pipe ---------- */
+.pipe {
+	overflow: hidden;
+}
+.pipe__body {
+	position: absolute;
+	inset: 0;
+	--pipe-stripes: linear-gradient(
+		90deg,
+		#067d0e 0 9%,
+		#0a9e17 9% 13%,
+		#08b81a 13% 52%,
+		#1fd82c 52% 74%,
+		#0dc71f 74% 80%,
+		#1fd82c 80% 90%,
+		#08b81a 90%
+	);
+}
+.pipe__lip {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	height: 30px;
+	box-sizing: border-box;
+	border: 3px solid #0b4d0b;
+	background: var(--pipe-stripes);
+}
+.pipe__shaft {
+	position: absolute;
+	left: 7px;
+	right: 7px;
+	top: 27px;
+	bottom: -3px;
+	box-sizing: border-box;
+	border: 3px solid #0b4d0b;
+	background: var(--pipe-stripes);
+}
+
+@keyframes hint-bounce {
+	from {
+		transform: translateY(0);
+	}
+	to {
+		transform: translateY(10px);
+	}
+}
+.pipe-hint {
+	text-align: center;
+	font-size: 22px;
+	color: #fff;
+	-webkit-text-stroke: 4px #0b4d0b;
+	paint-order: stroke fill;
+	animation: hint-bounce 0.5s ease-in-out infinite alternate;
+	pointer-events: none;
+}
+
+/* ---------- cave ---------- */
+.stage--cave {
+	background: #15162a;
+}
+.cave {
+	overflow: visible;
+}
+@keyframes fade-out {
+	to {
+		opacity: 0;
+	}
+}
+.cave--leaving {
+	animation: fade-out 1.5s ease-out forwards;
+}
+@keyframes twinkle {
+	0%,
+	100% {
+		opacity: 0.2;
+	}
+	50% {
+		opacity: 1;
+	}
+}
+.cave__sparkle {
+	animation: twinkle 1.8s ease-in-out infinite;
+}
+.floor--cave {
+	background-color: #5f807c;
+	background-image: radial-gradient(circle, #3f5c58 2px, transparent 2.5px);
+	background-size: 18px 18px;
+	background-position: 0 6px;
+}
+.floor--cave .floor__grass {
+	height: 8px;
+	background: linear-gradient(#22332f 0 3px, #8fb5ae 3px 8px);
+}
+.floor--cave .floor__scallop {
+	display: none;
+}
+
 /* ---------- gift boxes ---------- */
 .gift-box {
 	--outline: #7a3b00;
@@ -126,6 +238,32 @@ body {
 }
 .gift-box--special:not(.gift-box--opened) {
 	animation: glow 1.6s ease-in-out infinite;
+}
+
+@keyframes reveal-glow {
+	0%,
+	100% {
+		filter: drop-shadow(0 0 10px #5ab8ff) drop-shadow(0 0 4px #fff);
+		background-position: 0% 50%;
+	}
+	50% {
+		filter: drop-shadow(0 0 24px #ff7ac8) drop-shadow(0 0 4px #fff);
+		background-position: 100% 50%;
+	}
+}
+.gift-box--reveal:not(.gift-box--opened) {
+	--outline: #2b2160;
+	--light: rgba(255, 255, 255, 0.55);
+	--shade: rgba(40, 20, 90, 0.35);
+	background: linear-gradient(135deg, #5ab8ff, #b48cff, #ff7ac8, #5ab8ff);
+	background-size: 300% 300%;
+	animation: reveal-glow 2s ease-in-out infinite;
+}
+.gift-box--reveal .gift-box__spark:nth-child(odd) {
+	background: #9fd8ff;
+}
+.gift-box--reveal .gift-box__spark:nth-child(even) {
+	background: #ffb3df;
 }
 
 .gift-box__dot {
@@ -316,6 +454,9 @@ body {
 	text-align: center;
 	pointer-events: none;
 }
+.message-box--screen {
+	display: none;
+}
 .message-box > div:first-child {
 	color: #f8d820;
 }
@@ -326,8 +467,26 @@ body {
 /* ---------- touch controls ---------- */
 .touch-controls {
 	display: none;
+	margin: 0;
+	padding: 0;
+	border: 0;
 }
 @media (hover: none) and (pointer: coarse) {
+	.message-box--world {
+		display: none;
+	}
+	.message-box--screen {
+		display: block;
+		position: absolute;
+		top: calc(16px + env(safe-area-inset-top));
+		left: 50%;
+		transform: translateX(-50%);
+		width: min(90vw, 640px);
+		padding: 14px 12px;
+		font-size: 14px;
+		line-height: 24px;
+		z-index: 1;
+	}
 	.touch-controls {
 		display: block;
 		position: absolute;
@@ -338,32 +497,224 @@ body {
 		-webkit-touch-callout: none;
 	}
 }
-.touch-btn {
+.snes-pad {
 	position: absolute;
-	bottom: calc(16px + env(safe-area-inset-bottom));
-	width: 72px;
-	height: 72px;
-	padding: 0;
-	border: 3px solid #fff;
-	border-radius: 50%;
-	background: rgba(0, 0, 0, 0.35);
-	color: #fff;
-	font: 24px "Press Start 2P", monospace;
+	left: 50%;
+	bottom: calc(12px + env(safe-area-inset-bottom));
+	width: 420px;
+	height: 176px;
+	transform: translateX(-50%) scale(var(--pad-scale, 0.8));
+	transform-origin: bottom center;
+	filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.45));
 	pointer-events: auto;
+}
+@media (max-width: 400px) {
+	.snes-pad {
+		--pad-scale: 0.7;
+	}
+}
+@media (max-width: 340px) {
+	.snes-pad {
+		--pad-scale: 0.62;
+	}
+}
+@media (orientation: landscape) and (max-height: 500px) {
+	.snes-pad {
+		--pad-scale: 0.55;
+	}
+}
+.snes-pad::before,
+.snes-pad::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	width: 176px;
+	height: 176px;
+	border-radius: 50%;
+	background: radial-gradient(circle at 50% 30%, #e4e4ea, #c9c9d0 80%);
+}
+.snes-pad::before {
+	left: 0;
+}
+.snes-pad::after {
+	right: 0;
+}
+.snes-pad__menu {
+	position: absolute;
+	left: 80px;
+	right: 80px;
+	top: 2px;
+	height: 146px;
+	border-radius: 0 0 50% 50% / 0 0 22px 22px;
+	background: linear-gradient(#e4e4ea, #cfcfd6);
+	display: flex;
+	justify-content: center;
+	align-items: flex-end;
+	gap: 18px;
+	padding-bottom: 30px;
+	box-sizing: border-box;
+	z-index: 1;
+}
+.snes-pill {
+	position: relative;
+	width: 32px;
+	height: 11px;
+	border-radius: 6px;
+	background: linear-gradient(#3b3b40, #222226);
+	transform: rotate(-28deg);
+}
+.snes-pill i {
+	position: absolute;
+	left: 50%;
+	top: 22px;
+	transform: translateX(-50%) rotate(28deg);
+	color: #85858f;
+	font: italic 7px "Press Start 2P", monospace;
+}
+.snes-pad__well {
+	position: absolute;
+	left: 18px;
+	top: 18px;
+	width: 140px;
+	height: 140px;
+	border-radius: 50%;
+	background: radial-gradient(circle at 50% 60%, #c4c4cc, #dcdce2 70%);
+	box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.22);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 2;
+}
+.snes-dpad {
+	position: relative;
+	width: 94px;
+	height: 94px;
+	touch-action: none;
+}
+.snes-dpad__bar {
+	position: absolute;
+	background: linear-gradient(#3a3a3e, #26262a);
+	border-radius: 5px;
+	box-shadow: 0 4px 0 #111;
+}
+.snes-dpad__bar--h {
+	left: 0;
+	top: 32px;
+	width: 94px;
+	height: 30px;
+}
+.snes-dpad__bar--v {
+	left: 32px;
+	top: 0;
+	width: 30px;
+	height: 94px;
+}
+.snes-dpad__center {
+	position: absolute;
+	left: 36px;
+	top: 36px;
+	width: 22px;
+	height: 22px;
+	border-radius: 50%;
+	background: radial-gradient(circle, #1e1e22 40%, #333338);
+}
+.snes-dpad--left {
+	transform: perspective(300px) rotateY(-14deg);
+}
+.snes-dpad--right {
+	transform: perspective(300px) rotateY(14deg);
+}
+.snes-dpad--down {
+	transform: perspective(300px) rotateX(-14deg);
+}
+.snes-face {
+	position: absolute;
+	right: 8px;
+	top: 8px;
+	width: 160px;
+	height: 160px;
+	border-radius: 50%;
+	background: radial-gradient(circle at 50% 40%, #a9a9b3, #8f8f99 75%);
+	box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.3);
+	z-index: 2;
+}
+.snes-face__groove {
+	position: absolute;
+	width: 94px;
+	height: 42px;
+	border-radius: 21px;
+	background: #d6d6dd;
+	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+	transform: translate(-50%, -50%) rotate(-45deg);
+}
+.snes-face__groove--top {
+	left: 60px;
+	top: 60px;
+}
+.snes-face__groove--bottom {
+	left: 100px;
+	top: 100px;
+}
+.snes-btn {
+	position: absolute;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	transform: translate(-50%, -50%);
 	touch-action: none;
 	-webkit-tap-highlight-color: transparent;
 }
-.touch-btn:active {
-	background: rgba(255, 255, 255, 0.35);
+.snes-btn--x,
+.snes-btn--y {
+	background: radial-gradient(circle at 40% 35%, #d9d2f7, #a99be0 75%);
+	box-shadow: 0 4px 0 #7a6cb8;
 }
-.touch-btn--left {
-	left: calc(16px + env(safe-area-inset-left));
+.snes-btn--a,
+.snes-btn--b {
+	background: radial-gradient(circle at 40% 35%, #6a4fc4, #3d2590 75%);
+	box-shadow: 0 4px 0 #24145e;
 }
-.touch-btn--right {
-	left: calc(104px + env(safe-area-inset-left));
+.snes-btn:active {
+	transform: translate(-50%, calc(-50% + 3px));
+	box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
 }
-.touch-btn--jump {
-	right: calc(16px + env(safe-area-inset-right));
-	width: 88px;
-	height: 88px;
+.snes-btn--x {
+	left: 80px;
+	top: 40px;
+}
+.snes-btn--y {
+	left: 40px;
+	top: 80px;
+}
+.snes-btn--a {
+	left: 120px;
+	top: 80px;
+}
+.snes-btn--b {
+	left: 80px;
+	top: 120px;
+}
+.snes-btn__label {
+	position: absolute;
+	color: #ececf2;
+	font: italic 10px "Press Start 2P", monospace;
+	pointer-events: none;
+}
+.snes-btn--x .snes-btn__label {
+	right: -16px;
+	top: -8px;
+}
+.snes-btn--y .snes-btn__label {
+	left: -14px;
+	bottom: -6px;
+}
+.snes-btn--a .snes-btn__label {
+	right: -14px;
+	top: -6px;
+}
+.snes-btn--b .snes-btn__label {
+	left: -12px;
+	bottom: -14px;
 }

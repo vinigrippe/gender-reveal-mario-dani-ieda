@@ -8,7 +8,7 @@ const ORBIT_SPARKS = [
   { x: 0, y: -40 },
 ];
 
-export function GiftBox({ box }: { box: GiftBoxState }) {
+export function GiftBox({ box, reveal = false }: { box: GiftBoxState; reveal?: boolean }) {
   const offsetY = box.bump > 0 ? -Math.sin((box.bump / 10) * Math.PI) * 10 : 0;
   const offsetX = box.shake > 0 ? Math.sin(box.shake * 2) * 4 : 0;
 
@@ -16,6 +16,7 @@ export function GiftBox({ box }: { box: GiftBoxState }) {
     "gift-box",
     box.special ? "gift-box--special" : "",
     box.opened ? "gift-box--opened" : "",
+    reveal ? "gift-box--reveal" : "",
   ].join(" ");
 
   const style: CSSProperties = {

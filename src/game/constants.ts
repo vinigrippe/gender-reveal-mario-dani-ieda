@@ -16,10 +16,17 @@ export const WORD = ["M", "E", "N", "I", "N", "O"] as const;
 export const SPECIAL_INDEX = WORD.length - 1;
 
 export const FAKE_LETTER = "E";
+
+export const PIPE_WIDTH = 80;
+export const PIPE_HEIGHT = 96;
+export const PIPE_X = (WORLD_WIDTH - PIPE_WIDTH) / 2;
+export const PIPE_RISE_TICKS = 60;
+export const PIPE_ENTER_TICKS = 40;
+export const FADE_TICKS = 30;
 export const FAKE_REVEAL_TICKS = 240;
 export const PRANK_MESSAGE = [
-	"Mamma mia... é um menine!",
-	"Brincadeiras a parte, vamos de novo!",
+	"It's a me, menine!",
+	"Mamma mia... O que e esse cano?",
 ];
 
 export const LETTER_COLORS = [
@@ -105,6 +112,8 @@ export const CAT_LEG_FRAMES: string[][] = [
 		".......kkkk..kkkk..........",
 	],
 ];
+
+export const REVEAL_BURST_COLORS = ["#5ab8ff", "#ff7ac8", "#ffffff", "#ffd24a"];
 
 export const SPECIAL_BURST_COLORS = [
 	"#b24bff",
